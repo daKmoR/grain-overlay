@@ -1,0 +1,118 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../grain-update-inline-style-behavior/grain-update-inline-style-behavior.html">
+<link rel="import" href="../grain-responsive-behavior/grain-responsive-behavior.html">
+
+<dom-module id="grain-overlay">
+	<template>
+		<style>
+			:host {
+				--height: 100%;
+				--width: 100%;
+				--mobile-width: 100%;
+				--tablet-width: 100%;
+
+				width: var(--width);
+				height: var(--height);
+
+				box-sizing: border-box;
+				position: absolute;
+				left: 0;
+				top: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 100;
+				opacity: 0;
+				transition: opacity .25s ease-in-out;
+				pointer-events: none;
+			}
+
+			:host([is-mobile]) {
+				width: var(--mobile-width);
+			}
+			:host([is-tablet]) {
+				width: var(--tablet-width);
+			}
+
+			:host([opened="true"]) {
+				opacity: 1;
+				pointer-events: auto;
+			}
+
+			:host([layout=fullscreen]) {
+				position: fixed;
+				height: 100vh;
+			}
+		</style>
+
+		<slot></slot>
+	</template>
+
+	<script>
+
+		class GrainOverlay extends GrainUpdateInlineStyleBehavior(GrainResponsiveBehavior(Polymer.Element)) {
+
+			static get is() { return 'grain-overlay' }
+
+			static get properties() {
+				return {
+					opened: { // true, false
+						type: String,
+						reflectToAttribute: true,
+						value: 'false',
+						observer: '_onOpenedChange'
+					},
+					mobileOpened: { type: String, reflectToAttribute: true },
+					tabletOpened: { type: String, reflectToAttribute: true },
+
+					trigger: {
+						type: String,
+						reflectToAttribute: true
+					},
+
+					layout: { // fill, fullscreen, content
+						type: String,
+						reflectToAttribute: true
+					},
+					mobileLayout: { type: String, reflectToAttribute: true },
+					tabletLayout: { type: String, reflectToAttribute: true },
+				};
+			}
+
+			constructor() {
+				super();
+				this.initResponsiveBehaviorFor('opened');
+				this.initResponsiveBehaviorFor('layout');
+			}
+
+			ready() {
+				super.ready();
+				if ( this.parentElement && (this.trigger === undefined || this.trigger === 'parent')) {
+					this.parentElement.addEventListener('click', this._onClick.bind(this));
+				}
+			}
+
+			_onClick(e) {
+				if (this.opened) {
+					this.opened = this.opened === 'true' ? 'false' : 'true';
+				} else {
+					this.opened = 'true';
+				}
+			}
+
+			_onOpenedChange(newValue, oldValue) {
+				if (this.layout === 'fullscreen') {
+					if (newValue === 'true') {
+						document.body.style.overflow = 'hidden';
+					} else {
+						document.body.style.overflow = 'auto';
+					}
+				}
+			}
+
+		}
+
+		// Register custom element definition using standard platform API
+		customElements.define(GrainOverlay.is, GrainOverlay);
+	</script>
+</dom-module>
